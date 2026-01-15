@@ -85,7 +85,7 @@ python main.py
 #### 2) MSCVAE (`modeling/mscvae`)
 
 - **핵심 아이디어**
-  - 시계열의 각 시점에서 센서 간 상관 구조를 나타내는 **attribute matrix(outer product)**를 구성
+  - 시계열의 각 시점에서 센서 간 상관 구조를 나타내는 attribute matrix(outer product)를 구성
   - VAE + temporal 모델링(ConvLSTM)으로 상관 구조의 재구성 난이도를 이상 점수로 활용
 - **주요 파일**
   - `modeling/mscvae/model.py`: MSCVAE 아키텍처
@@ -94,7 +94,7 @@ python main.py
 
 #### 3) IntegratedFusionAD (`modeling/integrated`) — TCAD + MSCVAE 통합(실험)
 
-TCAD(전역/지역)과 MSCVAE(상관 구조)의 장점을 결합한 **다중 스트림 통합 인코더-디코더** 모델입니다.
+TCAD(전역/지역)과 MSCVAE(상관 구조)의 장점을 결합한 다중 스트림 통합 인코더-디코더 모델입니다.
 
 - **3개 인코더 스트림**
   - **Global**: Transformer encoder → $(Z_1)$
