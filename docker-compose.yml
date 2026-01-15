@@ -12,7 +12,7 @@ services:
       # GCS
       - GCS_BUCKET=bia-ai-storage
       - MDR_MODEL_GCS_PATH=models/mdr_model.pt
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     restart: unless-stopped
 
