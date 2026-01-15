@@ -18,8 +18,9 @@ COPY components ./components
 COPY utils ./utils
 
 # Build-time env for frontend API base (same-origin via nginx /api)
-ARG VITE_API_BASE=/api
-ENV VITE_API_BASE=$VITE_API_BASE
+# Production: uses /api (proxied by nginx)
+# Local dev: override with VITE_API_BASE=http://localhost:8000
+ENV VITE_API_BASE=/api
 
 RUN npm run build
 
@@ -52,21 +53,14 @@ COPY modeling/mdrad/*.py /app/modeling/mdrad/
 # Copy built frontend assets into nginx html directory
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
-# Nginx configuration template (will be rendered by entrypoint.sh)
-COPY infra/nginx/nginx.conf.template /etc/nginx/conf.d/default.conf.template
-
-# Remove default nginx config to avoid conflicts
-RUN rm -f /etc/nginx/conf.d/default.conf
-
-# Entrypoint: render template with PORT then start supervisor
-COPY infra/nginx/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Nginx configuration (static, port 80)
+COPY infra/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Supervisor configuration: run backend + nginx in one container
 COPY infra/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Expose port (for documentation only - actual port is determined by $PORT at runtime)
-# On Render, this is overridden by the PORT environment variable
+# Expose port 80 for nginx
 EXPOSE 80
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Start supervisor directly (no entrypoint needed)
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

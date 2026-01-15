@@ -30,8 +30,10 @@ function parseEndpointsJson(raw: string | undefined): Partial<ApiEndpoints> | nu
 // Vite에서는 환경변수가 import.meta.env에 들어갑니다.
 const env = (import.meta as any).env as Record<string, string | undefined> | undefined;
 
+// 프로덕션: Nginx 프록시를 통해 /api로 접근
+// 로컬 개발: Vite dev server에서 backend로 직접 접근
 export const API_BASE_URL =
-  env?.VITE_API_BASE?.replace(/\/$/, "") || "http://localhost:8000";
+  env?.VITE_API_BASE?.replace(/\/$/, "") || "/api";
 
 export const API_ENDPOINTS: ApiEndpoints = {
   ...DEFAULT_ENDPOINTS,

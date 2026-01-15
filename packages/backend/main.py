@@ -2,22 +2,29 @@
 FastAPI 엔드포인트 모음 (packages/backend)
 
 핵심 4개(프론트 API_ENDPOINTS에서 직접 호출):
-  - GET  /health
-  - GET  /logs?limit=100
-  - GET  /realtime/data
-  - POST /realtime/data
-  - GET  /models/list
+  - GET  /api/health
+  - GET  /api/logs?limit=100
+  - GET  /api/realtime/data
+  - POST /api/realtime/data
+  - GET  /api/models/list
 
 참고(프로젝트에 포함된 기타):
-  - POST /predict, POST /predict/batch
-  - WS   /realtime
-  - GET  /model/info
-  - GET  /gcp/list
+  - POST /api/predict, POST /api/predict/batch
+  - WS   /api/realtime
+  - GET  /api/model/info
+  - GET  /api/gcp/list
+
+API 문서:
+  - Swagger UI: /docs
+  - ReDoc: /redoc
+  - OpenAPI JSON: /openapi.json
 
 실행:
   - python main.py
   - RELOAD=true PORT=8000 python main.py
   - 또는: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  
+주의: root_path="/api"로 설정되어 있어 모든 엔드포인트는 /api prefix를 가집니다.
 """
 
 from __future__ import annotations
@@ -57,6 +64,7 @@ except Exception:
 app = FastAPI(
     title="Bistelligence API (packages/backend)",
     version="1.0.0",
+    root_path="/api",  # All routes will be prefixed with /api
 )
 
 app.add_middleware(
