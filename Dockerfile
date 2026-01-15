@@ -62,6 +62,9 @@ command=python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
 directory=/app/packages/backend
 autostart=true
 autorestart=true
+priority=10
+startsecs=3
+startretries=30
 stdout_logfile=/dev/stdout
 stdout_logfile_maxbytes=0
 stderr_logfile=/dev/stderr
@@ -72,13 +75,18 @@ environment=PYTHONUNBUFFERED="1"
 command=nginx -g "daemon off;"
 autostart=true
 autorestart=true
+priority=20
+startsecs=0
+startretries=30
 stdout_logfile=/dev/stdout
 stdout_logfile_maxbytes=0
 stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
 EOF
 
-EXPOSE 80 8000
+# 외부 노출은 nginx(80)만 사용합니다.
+# backend는 컨테이너 내부에서 8000으로 떠 있고 nginx가 127.0.0.1:8000으로 프록시합니다.
+EXPOSE 80
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 

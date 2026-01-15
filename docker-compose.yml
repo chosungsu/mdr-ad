@@ -7,7 +7,6 @@ services:
     container_name: bistelligence-app
     ports:
       - "80:80"      # Nginx (프론트엔드 + API 프록시)
-      - "8000:8000"  # FastAPI 직접 접근 (API 문서 등)
     environment:
       - NODE_ENV=production
       # GCS
