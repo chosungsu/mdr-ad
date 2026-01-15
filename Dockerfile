@@ -29,7 +29,12 @@ RUN npm run build
 FROM nginx:1.27
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-pip supervisor ca-certificates \
+  && apt-get install -y --no-install-recommends \
+     python3 \
+     python3-pip \
+     supervisor \
+     ca-certificates \
+     gettext-base \
   && rm -rf /var/lib/apt/lists/*
 
 # Install backend dependencies
@@ -47,46 +52,21 @@ COPY modeling/mdrad/*.py /app/modeling/mdrad/
 # Copy built frontend assets into nginx html directory
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
-# Nginx configuration
-COPY infra/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# Nginx configuration template (will be rendered by entrypoint.sh)
+COPY infra/nginx/nginx.conf.template /etc/nginx/conf.d/default.conf.template
+
+# Remove default nginx config to avoid conflicts
+RUN rm -f /etc/nginx/conf.d/default.conf
+
+# Entrypoint: render template with PORT then start supervisor
+COPY infra/nginx/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Supervisor configuration: run backend + nginx in one container
-RUN mkdir -p /etc/supervisor/conf.d && \
-    cat > /etc/supervisor/conf.d/supervisord.conf << 'EOF'
-[supervisord]
-nodaemon=true
-user=root
+COPY infra/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-[program:backend]
-command=python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
-directory=/app/packages/backend
-autostart=true
-autorestart=true
-priority=10
-startsecs=3
-startretries=30
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-environment=PYTHONUNBUFFERED="1"
-
-[program:nginx]
-command=nginx -g "daemon off;"
-autostart=true
-autorestart=true
-priority=20
-startsecs=0
-startretries=30
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-EOF
-
-# 외부 노출은 nginx(80)만 사용합니다.
-# backend는 컨테이너 내부에서 8000으로 떠 있고 nginx가 127.0.0.1:8000으로 프록시합니다.
+# Expose port (for documentation only - actual port is determined by $PORT at runtime)
+# On Render, this is overridden by the PORT environment variable
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
+ENTRYPOINT ["/entrypoint.sh"]
