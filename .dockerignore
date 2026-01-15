@@ -1,0 +1,49 @@
+## Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+## Frontend build artifacts
+node_modules
+dist
+dist-ssr
+*.local
+
+## Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+## Git
+.git
+
+## Env (secrets)
+.env
+.env.*
+.env.local
+
+## Python caches / venv
+**/__pycache__/
+**/*.pyc
+packages/backend/.venv/
+packages/backend/__pycache__/
+
+## Unused/large project folders (Docker build에 불필요)
+bistelligence/
+
+## Modeling outputs / large data (Docker 이미지에 불필요)
+modeling/**
+!modeling/mdrad/
+!modeling/mdrad/*.py
+

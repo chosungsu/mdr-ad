@@ -1,0 +1,5 @@
+{
+  "name": "Bis.ai Dashboard",
+  "description": "A real-time monitoring dashboard featuring live data visualization, log streaming, and system status tracking with dark mode support.",
+  "requestFramePermissions": []
+}
