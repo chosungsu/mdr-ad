@@ -1,0 +1,33 @@
+이상치 구간(연속 범위) 통계 - MDRAD
+- 75% 기준값(주의): 0.191546
+- 95% 기준값(위험): 0.815120
+
+[75% 초과 구간]
+- 구간 수: 11
+- 평균 구간 길이: 39.000000
+  001) start=299.000, end=409.000, length=111.000, points=111
+  002) start=455.000, end=459.000, length=5.000, points=5
+  003) start=465.000, end=466.000, length=2.000, points=2
+  004) start=594.000, end=656.000, length=63.000, points=63
+  005) start=688.000, end=715.000, length=28.000, points=28
+  006) start=911.000, end=962.000, length=52.000, points=52
+  007) start=1234.000, end=1288.000, length=55.000, points=55
+  008) start=1402.000, end=1429.000, length=28.000, points=28
+  009) start=1480.000, end=1538.000, length=59.000, points=59
+  010) start=1653.000, end=1677.000, length=25.000, points=25
+  011) start=1739.000, end=1739.000, length=1.000, points=1
+
+[95% 초과 구간]
+- 구간 수: 11
+- 평균 구간 길이: 7.818182
+  001) start=611.000, end=612.000, length=2.000, points=2
+  002) start=617.000, end=618.000, length=2.000, points=2
+  003) start=622.000, end=632.000, length=11.000, points=11
+  004) start=634.000, end=635.000, length=2.000, points=2
+  005) start=924.000, end=934.000, length=11.000, points=11
+  006) start=936.000, end=936.000, length=1.000, points=1
+  007) start=941.000, end=941.000, length=1.000, points=1
+  008) start=1242.000, end=1276.000, length=35.000, points=35
+  009) start=1494.000, end=1500.000, length=7.000, points=7
+  010) start=1502.000, end=1502.000, length=1.000, points=1
+  011) start=1508.000, end=1520.000, length=13.000, points=13

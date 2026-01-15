@@ -1,0 +1,24 @@
+이상치 구간(연속 범위) 통계
+- x축 단위: Time Step(원본 샘플 인덱스 기준)
+- 75% 기준값(주의): 0.258536
+- 95% 기준값(위험): 0.361429
+
+[75% 초과 구간]
+- 구간 수: 7
+- 평균 구간 길이: 61.285714
+  001) start=276.000, end=354.000, length=79.000, points=79
+  002) start=582.000, end=654.000, length=73.000, points=73
+  003) start=887.000, end=962.000, length=76.000, points=76
+  004) start=1210.000, end=1288.000, length=79.000, points=79
+  005) start=1449.000, end=1538.000, length=90.000, points=90
+  006) start=1707.000, end=1707.000, length=1.000, points=1
+  007) start=1709.000, end=1739.000, length=31.000, points=31
+
+[95% 초과 구간]
+- 구간 수: 5
+- 평균 구간 길이: 17.200000
+  001) start=308.000, end=330.000, length=23.000, points=23
+  002) start=605.000, end=608.000, length=4.000, points=4
+  003) start=615.000, end=633.000, length=19.000, points=19
+  004) start=1237.000, end=1275.000, length=39.000, points=39
+  005) start=1280.000, end=1280.000, length=1.000, points=1
