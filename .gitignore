@@ -13,6 +13,15 @@ dist-ssr
 *.local
 
 .env
+.env.local
+.env.*.local
+
+# GCP Service Account Keys (NEVER commit these!)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!metadata.json
 
 # Editor directories and files
 .vscode/*

@@ -7,12 +7,9 @@ services:
     container_name: bistelligence-app
     ports:
       - "80:80"      # Nginx (프론트엔드 + API 프록시)
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      # GCS
-      - GCS_BUCKET=bia-ai-storage
-      - MDR_MODEL_GCS_PATH=models/mdr_model.pt
-    # env_file:
-    #   - .env
     restart: unless-stopped
 

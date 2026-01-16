@@ -41,22 +41,58 @@ This project was conducted from June 2022 to March 2023 on the development of an
 
 ## Quick Start
 
-#### Frontend (Vite)
+### Local Development (Without Docker)
 
-- **요구사항**: Node.js
+#### 1. Setup Environment Variables
+
+Create a `.env` file in the project root:
 
 ```bash
-npm install
-npm run dev
+# GCP Authentication (required)
+GCP_PROJECT_ID=your-project-id
+GCP_PRIVATE_KEY_ID=your-private-key-id
+GCP_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
+GCP_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+GCP_CLIENT_ID=your-client-id
+
+# GCS Configuration
+GCS_BUCKET=your-bucket-name
+DATASET_GCS_PATH=data/sensor_data_rms2_fixed.csv
+MDR_MODEL_GCS_PATH=models/mdr_model.pt
+
+# Local development: no API prefix (direct access)
+USE_API_PREFIX=false
 ```
 
-#### Backend (FastAPI)
+#### 2. Start Backend (FastAPI)
 
 ```bash
 cd packages/backend
 pip install -r requirements.txt
 python main.py
 ```
+
+Backend will run at `http://localhost:8000`
+
+#### 3. Start Frontend (Vite)
+
+```bash
+npm install
+npm run dev
+```
+
+Frontend will run at `http://localhost:5173` and automatically connect to backend at `http://localhost:8000`
+
+### Production Deployment (Docker)
+
+```bash
+docker-compose up --build
+```
+
+This will:
+- Build frontend with Nginx proxy configuration
+- Run backend with `/api` prefix
+- Serve everything on port 80
 
 #### API (Backend)
 

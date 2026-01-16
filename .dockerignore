@@ -33,6 +33,13 @@ Thumbs.db
 .env.*
 .env.local
 
+## GCP Service Account Keys (NEVER include in Docker image!)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!metadata.json
+
 ## Python caches / venv
 **/__pycache__/
 **/*.pyc

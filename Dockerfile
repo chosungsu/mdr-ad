@@ -50,6 +50,9 @@ COPY packages/backend/ ./
 RUN mkdir -p /app/modeling/mdrad
 COPY modeling/mdrad/*.py /app/modeling/mdrad/
 
+# Set environment variable for production (behind Nginx proxy)
+ENV USE_API_PREFIX=true
+
 # Copy built frontend assets into nginx html directory
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
