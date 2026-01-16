@@ -37,18 +37,8 @@ const SystemSummaryWidget: React.FC<SystemSummaryWidgetProps> = ({ isRunning }) 
           setUptime(Math.max(0, Math.min(100, 100 - health.system.memory_percent)));
         }
         
-        // 마지막 체크 시간 업데이트
-        const checkTime = new Date(health.timestamp);
-        const now = new Date();
-        const diffSeconds = Math.floor((now.getTime() - checkTime.getTime()) / 1000);
-        if (diffSeconds < 5) {
-          setLastCheck('Just now');
-        } else if (diffSeconds < 60) {
-          setLastCheck(`${diffSeconds}초 전`);
-        } else {
-          const diffMinutes = Math.floor(diffSeconds / 60);
-          setLastCheck(`${diffMinutes}분 전`);
-        }
+        // Health check succeeded - always show "Just now"
+        setLastCheck('Just now');
       } catch (err: any) {
         console.error('Health 체크 실패:', err);
         // Show more detailed error message
