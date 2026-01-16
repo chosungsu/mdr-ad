@@ -99,7 +99,7 @@ _MODEL_LOCK = threading.Lock()
 
 # ===== Pydantic Models =====
 class SystemLogsResponse(BaseModel):
-    """Response model for system logs endpoint"""
+    """Response model for system logs endpoint (includes realtime scores)"""
     success: bool
     logs: List[Dict[str, Any]]
     count: int
@@ -107,6 +107,10 @@ class SystemLogsResponse(BaseModel):
     last_id: int = 0
     next_cursor: int = 0
     wrapped: bool = False
+    # Realtime scores (integrated for dashboard)
+    scores: Dict[str, Optional[float]] = {}
+    scores_timestamp: Optional[str] = None
+    scores_status: str = "success"
 
 
 class RealtimeScoresResponse(BaseModel):
@@ -530,6 +534,13 @@ async def logs(
             })
             current = nxt
 
+        # Get latest scores for dashboard integration
+        with _MODEL_LOCK:
+            latest_scores = dict(_LATEST_SCORES.get("scores") or {})
+            scores_ts = _LATEST_SCORES.get("timestamp")
+        
+        scores_status = "success" if MODELS_BOOT_OK else "error"
+
         return SystemLogsResponse(
             success=True,
             logs=out,
@@ -538,8 +549,16 @@ async def logs(
             last_id=current,
             next_cursor=current,
             wrapped=wrapped_flag,
+            scores=latest_scores,
+            scores_timestamp=scores_ts,
+            scores_status=scores_status,
         )
     except Exception as e:
+        # Get latest scores even on error
+        with _MODEL_LOCK:
+            latest_scores = dict(_LATEST_SCORES.get("scores") or {})
+            scores_ts = _LATEST_SCORES.get("timestamp")
+        
         return SystemLogsResponse(
             success=False,
             logs=[],
@@ -548,6 +567,9 @@ async def logs(
             last_id=int(cursor),
             next_cursor=int(cursor),
             wrapped=False,
+            scores=latest_scores,
+            scores_timestamp=scores_ts,
+            scores_status="error",
         )
 
 
