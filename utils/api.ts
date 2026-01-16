@@ -44,29 +44,38 @@ export const API_ENDPOINTS: ApiEndpoints = {
 };
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  // 백엔드가 죽어있거나 네트워크가 느릴 때도 UI 첫 렌더가 "오래 멈추지" 않게 타임아웃을 둡니다.
-  const timeoutMs = Number(env?.VITE_API_TIMEOUT_MS || "2500");
+  // Increase timeout for production (Render + Cloudflare can be slow)
+  // Local: 2.5s, Production: 10s
+  const timeoutMs = Number(env?.VITE_API_TIMEOUT_MS || (env?.MODE === "development" ? "2500" : "10000"));
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    signal: controller.signal,
-    headers: {
-      ...(init?.headers || {}),
-      ...(init?.body instanceof FormData
-        ? {}
-        : { "Content-Type": "application/json" }),
-    },
-  }).finally(() => {
-    window.clearTimeout(timeoutId);
-  });
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        ...(init?.headers || {}),
+        ...(init?.body instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
+      },
+    }).finally(() => {
+      window.clearTimeout(timeoutId);
+    });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || res.statusText);
+    }
+    return (await res.json()) as T;
+  } catch (error: any) {
+    // Better error messages for debugging
+    if (error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeoutMs}ms: ${API_BASE_URL}${path}`);
+    }
+    throw error;
   }
-  return (await res.json()) as T;
 }
 
 export const backendApi = {

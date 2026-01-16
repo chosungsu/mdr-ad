@@ -49,7 +49,15 @@ const SystemSummaryWidget: React.FC<SystemSummaryWidgetProps> = ({ isRunning }) 
         }
       } catch (err: any) {
         console.error('Health 체크 실패:', err);
-        setLastCheck('연결 실패');
+        // Show more detailed error message
+        const errorMsg = err?.message || '연결 실패';
+        if (errorMsg.includes('timeout')) {
+          setLastCheck('타임아웃');
+        } else if (errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')) {
+          setLastCheck('네트워크 오류');
+        } else {
+          setLastCheck('연결 실패');
+        }
       }
     };
 

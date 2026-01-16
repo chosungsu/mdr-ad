@@ -479,8 +479,15 @@ async def logs(
                 if wrap:
                     wrapped_flag = True
                     nxt = 1
+                    # Reset buffer when wrapping back to start
+                    with _MODEL_LOCK:
+                        _SEQ_BUF.clear()
                 else:
                     break
+
+            # Skip if we've already processed this row (avoid infinite loop)
+            if nxt == cursor and _ > 0:
+                break
 
             row_raw = DATASET_ROWS[nxt - 1]
             row_num = _row_as_numbers(row_raw)
