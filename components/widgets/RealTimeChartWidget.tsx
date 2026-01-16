@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Activity } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
-import { useRealtimeScores } from '../../utils/useRealtimeScores';
+import { useDashboardData } from '../../utils/useDashboardData';
 
 interface RealTimeChartWidgetProps {
   isRunning: boolean;
@@ -15,7 +15,7 @@ type DualMetricPoint = {
 
 const RealTimeChartWidget: React.FC<RealTimeChartWidgetProps> = ({ isRunning }) => {
   const [data, setData] = useState<DualMetricPoint[]>([]);
-  const realtimeData = useRealtimeScores(isRunning);
+  const dashboardData = useDashboardData(isRunning);
 
   // Stop이면 UI 초기화
   useEffect(() => {
@@ -24,22 +24,22 @@ const RealTimeChartWidget: React.FC<RealTimeChartWidgetProps> = ({ isRunning }) 
     }
   }, [isRunning]);
 
-  // Update chart when new realtime data arrives
+  // Update chart when new dashboard data arrives (every 2 seconds)
   useEffect(() => {
-    if (!isRunning || !realtimeData || realtimeData.status !== 'success') return;
+    if (!isRunning || !dashboardData || dashboardData.scoresStatus !== 'success') return;
     
     const now = new Date();
     const newPoint: DualMetricPoint = {
       time: now.toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' }),
-      mdrad: realtimeData.scores.mdrad ?? 0,
+      mdrad: dashboardData.scores.mdrad ?? 0,
     };
 
     setData(prevData => {
       const newData = [...prevData, newPoint];
-      if (newData.length > 30) newData.shift(); // Keep last 30 points
+      if (newData.length > 60) newData.shift(); // Keep last 60 points (2 minutes at 2s interval)
       return newData;
     });
-  }, [realtimeData, isRunning]);
+  }, [dashboardData, isRunning]);
 
   return (
     <WidgetCard title="Live dashboard" icon={<Activity size={20} />} className="col-span-1 lg:col-span-2 min-h-[350px] h-full">

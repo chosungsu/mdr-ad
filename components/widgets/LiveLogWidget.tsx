@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { List, Info, AlertTriangle, XCircle, Check } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
 import { LogEntry } from '../../types';
-import { useRealtimeLogs } from '../../utils/useRealtimeLogs';
+import { useDashboardData } from '../../utils/useDashboardData';
 
 interface LiveLogWidgetProps {
   isRunning: boolean;
@@ -11,7 +11,7 @@ interface LiveLogWidgetProps {
 const LiveLogWidget: React.FC<LiveLogWidgetProps> = ({ isRunning }) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const realtimeLogsData = useRealtimeLogs(isRunning);
+  const dashboardData = useDashboardData(isRunning);
 
   // Stop 버튼 등으로 isRunning이 false가 되면 UI도 즉시 초기화
   useEffect(() => {
@@ -66,12 +66,12 @@ const LiveLogWidget: React.FC<LiveLogWidgetProps> = ({ isRunning }) => {
     return raw.length > maxLenHard ? `${raw.slice(0, maxLenHard)}…` : raw;
   };
 
-  // Update logs when new realtime data arrives
+  // Update logs when new dashboard data arrives (every 2 seconds)
   useEffect(() => {
-    if (!isRunning || !realtimeLogsData) return;
+    if (!isRunning || !dashboardData) return;
 
-    if (realtimeLogsData.success && realtimeLogsData.logs.length > 0) {
-      const newLogs: LogEntry[] = realtimeLogsData.logs.map((log) => ({
+    if (dashboardData.logsSuccess && dashboardData.logs.length > 0) {
+      const newLogs: LogEntry[] = dashboardData.logs.map((log) => ({
         id: log.id,
         timestamp: log.timestamp,
         message: formatMessage(log.message),
@@ -79,17 +79,17 @@ const LiveLogWidget: React.FC<LiveLogWidgetProps> = ({ isRunning }) => {
       }));
 
       // CSV 마지막 행까지 갔다가 wrap되면: 로그 위젯 리스트를 전부 지우고 처음부터 다시 쌓기
-      if (realtimeLogsData.wrapped) {
+      if (dashboardData.wrapped) {
         setLogs(newLogs.slice(0, 200));
       } else {
         // 최신 로그가 항상 위로: 새 로그를 앞에 붙임
         setLogs((prev) => [...newLogs, ...prev].slice(0, 200));
       }
       setError(null);
-    } else if (!realtimeLogsData.success) {
-      setError(realtimeLogsData.message);
+    } else if (!dashboardData.logsSuccess) {
+      setError(dashboardData.logsMessage);
     }
-  }, [realtimeLogsData, isRunning]);
+  }, [dashboardData, isRunning]);
 
   const getIcon = (level: string) => {
     switch (level) {

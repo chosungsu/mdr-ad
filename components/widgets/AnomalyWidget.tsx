@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
-import { useRealtimeScores } from '../../utils/useRealtimeScores';
+import { useDashboardData } from '../../utils/useDashboardData';
 
 interface AnomalyWidgetProps {
   isRunning: boolean;
@@ -25,7 +25,7 @@ const AnomalyWidget: React.FC<AnomalyWidgetProps> = ({ isRunning }) => {
     mdrad_critical: 0,
   });
   const lastCursorRef = useRef<number>(0);
-  const realtimeData = useRealtimeScores(isRunning);
+  const dashboardData = useDashboardData(isRunning);
 
   useEffect(() => {
     if (!isRunning) {
@@ -35,12 +35,12 @@ const AnomalyWidget: React.FC<AnomalyWidgetProps> = ({ isRunning }) => {
     }
   }, [isRunning]);
 
-  // Update counts when new realtime data arrives
+  // Update counts when new dashboard data arrives (every 2 seconds)
   useEffect(() => {
-    if (!isRunning || !realtimeData || realtimeData.status !== 'success') return;
-    if (!realtimeData.scores) return;
+    if (!isRunning || !dashboardData || dashboardData.scoresStatus !== 'success') return;
+    if (!dashboardData.scores) return;
 
-    const cursor = Number(realtimeData.cursor || 0);
+    const cursor = Number(dashboardData.cursor || 0);
     
     // wrap으로 cursor가 1로 다시 돌아가면, 카운트도 새 사이클로 간주해 리셋
     if (cursor > 0 && lastCursorRef.current > 0 && cursor < lastCursorRef.current) {
@@ -51,13 +51,13 @@ const AnomalyWidget: React.FC<AnomalyWidgetProps> = ({ isRunning }) => {
     if (cursor <= lastCursorRef.current) return;
     lastCursorRef.current = cursor;
 
-    const mdrLevel = levelOf(realtimeData.scores.mdrad, THRESH.warning, THRESH.critical);
+    const mdrLevel = levelOf(dashboardData.scores.mdrad, THRESH.warning, THRESH.critical);
 
     setCounts((prev) => ({
       mdrad_warning: prev.mdrad_warning + (mdrLevel === 'warning' ? 1 : 0),
       mdrad_critical: prev.mdrad_critical + (mdrLevel === 'critical' ? 1 : 0),
     }));
-  }, [realtimeData, isRunning]);
+  }, [dashboardData, isRunning]);
 
   return (
     <WidgetCard title="Detected Anomalies" icon={<AlertTriangle size={20} />} className="h-full min-h-[190px]">

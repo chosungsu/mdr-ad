@@ -1,8 +1,10 @@
 /**
- * Shared realtime logs hook
+ * Unified dashboard data hook
  * 
- * All components use this hook to get the latest logs from a single API call.
- * This prevents duplicate API requests and improves performance.
+ * Single API call (/api/logs) provides both logs and scores data.
+ * All widgets share this hook for optimal performance.
+ * 
+ * Updates every 2 seconds for smooth animation while reducing server load.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -15,25 +17,34 @@ export interface LogEntry {
   level: string;
 }
 
-export interface RealtimeLogsData {
-  success: boolean;
+export interface DashboardData {
+  // Logs data
   logs: LogEntry[];
-  count: number;
-  message: string;
-  last_id: number;
-  next_cursor: number;
+  logsSuccess: boolean;
+  logsMessage: string;
+  cursor: number;
   wrapped: boolean;
+  
+  // Scores data
+  scores: {
+    mdrad: number | null;
+  };
+  scoresTimestamp: string | null;
+  scoresStatus: 'success' | 'error';
+  
+  // Common
+  timestamp: string;
 }
 
 // Singleton state shared across all hook instances
-let sharedData: RealtimeLogsData | null = null;
-let sharedListeners: Set<(data: RealtimeLogsData) => void> = new Set();
+let sharedData: DashboardData | null = null;
+let sharedListeners: Set<(data: DashboardData) => void> = new Set();
 let sharedInterval: NodeJS.Timeout | null = null;
 let activeSubscribers = 0;
 let currentCursor = 0;
 
 /**
- * Fetch logs from backend and notify all listeners
+ * Fetch dashboard data from backend and notify all listeners
  */
 async function fetchAndNotify() {
   try {
@@ -44,18 +55,27 @@ async function fetchAndNotify() {
     });
     
     sharedData = {
-      success: response.success,
+      // Logs data
       logs: response.logs.map((log: any, index: number) => ({
         id: `log-${log.id ?? index}-${log.timestamp}`,
         timestamp: new Date(log.timestamp).getTime(),
         message: log.message,
         level: log.level,
       })),
-      count: response.count,
-      message: response.message,
-      last_id: response.last_id,
-      next_cursor: response.next_cursor,
+      logsSuccess: response.success,
+      logsMessage: response.message,
+      cursor: response.next_cursor,
       wrapped: response.wrapped,
+      
+      // Scores data (from integrated API)
+      scores: {
+        mdrad: response.scores?.mdrad ?? null,
+      },
+      scoresTimestamp: response.scores_timestamp ?? null,
+      scoresStatus: response.scores_status === 'error' ? 'error' : 'success',
+      
+      // Common
+      timestamp: new Date().toISOString(),
     };
     
     // Update cursor for next fetch
@@ -66,13 +86,13 @@ async function fetchAndNotify() {
     // Notify all subscribers
     sharedListeners.forEach(listener => listener(sharedData!));
   } catch (error: any) {
-    console.error('Failed to fetch realtime logs:', error);
+    console.error('Failed to fetch dashboard data:', error);
     // Don't update sharedData on error to keep last known good state
   }
 }
 
 /**
- * Start the shared polling interval
+ * Start the shared polling interval (every 2 seconds)
  */
 function startPolling() {
   if (sharedInterval) return; // Already polling
@@ -80,8 +100,8 @@ function startPolling() {
   // Fetch immediately
   fetchAndNotify();
   
-  // Then poll every second
-  sharedInterval = setInterval(fetchAndNotify, 1000);
+  // Then poll every 2 seconds
+  sharedInterval = setInterval(fetchAndNotify, 2000);
 }
 
 /**
@@ -97,19 +117,19 @@ function stopPolling() {
 /**
  * Reset cursor to start from beginning
  */
-export function resetLogsCursor() {
+export function resetDashboardCursor() {
   currentCursor = 0;
 }
 
 /**
- * Hook to get realtime logs
+ * Hook to get unified dashboard data (logs + scores)
  * 
  * @param isRunning - Whether the dashboard is running
- * @returns Latest realtime logs data
+ * @returns Latest dashboard data
  */
-export function useRealtimeLogs(isRunning: boolean): RealtimeLogsData | null {
-  const [data, setData] = useState<RealtimeLogsData | null>(sharedData);
-  const listenerRef = useRef<((data: RealtimeLogsData) => void) | null>(null);
+export function useDashboardData(isRunning: boolean): DashboardData | null {
+  const [data, setData] = useState<DashboardData | null>(sharedData);
+  const listenerRef = useRef<((data: DashboardData) => void) | null>(null);
 
   useEffect(() => {
     if (!isRunning) {
@@ -123,7 +143,7 @@ export function useRealtimeLogs(isRunning: boolean): RealtimeLogsData | null {
       // Stop polling if no active subscribers
       if (activeSubscribers === 0) {
         stopPolling();
-        resetLogsCursor(); // Reset cursor when stopping
+        resetDashboardCursor(); // Reset cursor when stopping
       }
       
       return;
@@ -131,7 +151,7 @@ export function useRealtimeLogs(isRunning: boolean): RealtimeLogsData | null {
 
     // Subscribe to updates
     activeSubscribers++;
-    listenerRef.current = (newData: RealtimeLogsData) => {
+    listenerRef.current = (newData: DashboardData) => {
       setData(newData);
     };
     sharedListeners.add(listenerRef.current);
@@ -150,7 +170,7 @@ export function useRealtimeLogs(isRunning: boolean): RealtimeLogsData | null {
       // Stop polling if no active subscribers
       if (activeSubscribers === 0) {
         stopPolling();
-        resetLogsCursor(); // Reset cursor when stopping
+        resetDashboardCursor(); // Reset cursor when stopping
       }
     };
   }, [isRunning]);

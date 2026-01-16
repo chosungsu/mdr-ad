@@ -3,7 +3,7 @@ import { CheckCircle2, AlertOctagon, XCircle, Server } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
 import { SystemStatus } from '../../types';
 import { backendApi } from '../../utils/api';
-import { useRealtimeScores } from '../../utils/useRealtimeScores';
+import { useDashboardData } from '../../utils/useDashboardData';
 
 interface SystemSummaryWidgetProps {
   isRunning: boolean;
@@ -16,7 +16,7 @@ const SystemSummaryWidget: React.FC<SystemSummaryWidgetProps> = ({ isRunning }) 
   const [modelLoaded, setModelLoaded] = useState<boolean>(false);
   const [latestScore, setLatestScore] = useState<number | null>(null);
   const [latestLevel, setLatestLevel] = useState<SystemStatus>('normal');
-  const realtimeData = useRealtimeScores(isRunning);
+  const dashboardData = useDashboardData(isRunning);
 
   useEffect(() => {
     if (!isRunning) {
@@ -82,21 +82,21 @@ const SystemSummaryWidget: React.FC<SystemSummaryWidgetProps> = ({ isRunning }) 
     return 'normal';
   };
 
-  // Update status when new realtime data arrives
+  // Update status when new dashboard data arrives (every 2 seconds)
   useEffect(() => {
-    if (!isRunning || !realtimeData) return;
+    if (!isRunning || !dashboardData) return;
 
-    if (realtimeData.status !== 'success') {
+    if (dashboardData.scoresStatus !== 'success') {
       setStatus('warning');
       return;
     }
 
-    const score = realtimeData.scores?.mdrad ?? null;
+    const score = dashboardData.scores?.mdrad ?? null;
     const level = levelOf(score, THRESH.warning, THRESH.critical);
     setLatestScore(score);
     setLatestLevel(level);
     setStatus(level);
-  }, [realtimeData, isRunning]);
+  }, [dashboardData, isRunning]);
 
   const getStatusConfig = (s: SystemStatus) => {
     switch (s) {
