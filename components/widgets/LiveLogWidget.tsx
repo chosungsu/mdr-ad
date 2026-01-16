@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { List, Info, AlertTriangle, XCircle, Check } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
 import { LogEntry } from '../../types';
-import { backendApi } from '../../utils/api';
+import { useRealtimeLogs } from '../../utils/useRealtimeLogs';
 
 interface LiveLogWidgetProps {
   isRunning: boolean;
@@ -11,14 +11,14 @@ interface LiveLogWidgetProps {
 const LiveLogWidget: React.FC<LiveLogWidgetProps> = ({ isRunning }) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const cursorRef = useRef<number>(0);
+  const realtimeLogsData = useRealtimeLogs(isRunning);
 
   // Stop 버튼 등으로 isRunning이 false가 되면 UI도 즉시 초기화
   useEffect(() => {
-    if (isRunning) return;
-    setLogs([]);
-    setError(null);
-    cursorRef.current = 0;
+    if (!isRunning) {
+      setLogs([]);
+      setError(null);
+    }
   }, [isRunning]);
 
   const levelAccent = (level: LogEntry["level"]) => {
@@ -66,46 +66,30 @@ const LiveLogWidget: React.FC<LiveLogWidgetProps> = ({ isRunning }) => {
     return raw.length > maxLenHard ? `${raw.slice(0, maxLenHard)}…` : raw;
   };
 
+  // Update logs when new realtime data arrives
   useEffect(() => {
-    if (!isRunning) return;
+    if (!isRunning || !realtimeLogsData) return;
 
-    // 1초마다 로그 업데이트
-    const interval = setInterval(async () => {
-      try {
-        // 로컬 CSV에서 cursor 기반으로 "다음 1행"을 가져옴
-        const response = await backendApi.getSystemLogs({
-          limit: 1,
-          cursor: cursorRef.current,
-          wrap: true,
-        });
-        if (response.success && response.logs) {
-          const newLogs: LogEntry[] = response.logs.map((log, index) => ({
-            id: `log-${log.id ?? index}-${log.timestamp}`,
-            timestamp: new Date(log.timestamp).getTime(),
-            message: formatMessage(log.message),
-            level: log.level,
-          }));
+    if (realtimeLogsData.success && realtimeLogsData.logs.length > 0) {
+      const newLogs: LogEntry[] = realtimeLogsData.logs.map((log) => ({
+        id: log.id,
+        timestamp: log.timestamp,
+        message: formatMessage(log.message),
+        level: log.level,
+      }));
 
-          if (newLogs.length > 0) {
-            // CSV 마지막 행까지 갔다가 wrap되면: 로그 위젯 리스트를 전부 지우고 처음부터 다시 쌓기
-            if (response.wrapped) {
-              setLogs(newLogs.slice(0, 200));
-            } else {
-              // 최신 로그가 항상 위로: 새 로그를 앞에 붙임
-              setLogs((prev) => [...newLogs, ...prev].slice(0, 200));
-            }
-          }
-          if (response.next_cursor !== undefined) cursorRef.current = response.next_cursor;
-          setError(null);
-        }
-      } catch (err: any) {
-        console.error('로그 업데이트 실패:', err);
-        // 에러가 발생해도 기존 로그는 유지
+      // CSV 마지막 행까지 갔다가 wrap되면: 로그 위젯 리스트를 전부 지우고 처음부터 다시 쌓기
+      if (realtimeLogsData.wrapped) {
+        setLogs(newLogs.slice(0, 200));
+      } else {
+        // 최신 로그가 항상 위로: 새 로그를 앞에 붙임
+        setLogs((prev) => [...newLogs, ...prev].slice(0, 200));
       }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning]);
+      setError(null);
+    } else if (!realtimeLogsData.success) {
+      setError(realtimeLogsData.message);
+    }
+  }, [realtimeLogsData, isRunning]);
 
   const getIcon = (level: string) => {
     switch (level) {

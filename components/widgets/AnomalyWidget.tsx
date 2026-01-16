@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
-import { backendApi } from '../../utils/api';
+import { useRealtimeScores } from '../../utils/useRealtimeScores';
 
 interface AnomalyWidgetProps {
   isRunning: boolean;
@@ -25,6 +25,7 @@ const AnomalyWidget: React.FC<AnomalyWidgetProps> = ({ isRunning }) => {
     mdrad_critical: 0,
   });
   const lastCursorRef = useRef<number>(0);
+  const realtimeData = useRealtimeScores(isRunning);
 
   useEffect(() => {
     if (!isRunning) {
@@ -32,35 +33,31 @@ const AnomalyWidget: React.FC<AnomalyWidgetProps> = ({ isRunning }) => {
       lastCursorRef.current = 0;
       return;
     }
-
-    const interval = setInterval(async () => {
-      try {
-        const r = await backendApi.getRealtimeScores();
-        if (r.status !== 'success') return;
-        if (!r.scores) return;
-
-        const cursor = Number(r.cursor || 0);
-        // wrap으로 cursor가 1로 다시 돌아가면, 카운트도 새 사이클로 간주해 리셋
-        if (cursor > 0 && lastCursorRef.current > 0 && cursor < lastCursorRef.current) {
-          setCounts({ mdrad_warning: 0, mdrad_critical: 0 });
-        }
-        // 같은 cursor를 중복 처리하지 않음
-        if (cursor <= lastCursorRef.current) return;
-        lastCursorRef.current = cursor;
-
-        const mdrLevel = levelOf(r.scores.mdrad, THRESH.warning, THRESH.critical);
-
-        setCounts((prev) => ({
-          mdrad_warning: prev.mdrad_warning + (mdrLevel === 'warning' ? 1 : 0),
-          mdrad_critical: prev.mdrad_critical + (mdrLevel === 'critical' ? 1 : 0),
-        }));
-      } catch (e) {
-        // ignore
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
   }, [isRunning]);
+
+  // Update counts when new realtime data arrives
+  useEffect(() => {
+    if (!isRunning || !realtimeData || realtimeData.status !== 'success') return;
+    if (!realtimeData.scores) return;
+
+    const cursor = Number(realtimeData.cursor || 0);
+    
+    // wrap으로 cursor가 1로 다시 돌아가면, 카운트도 새 사이클로 간주해 리셋
+    if (cursor > 0 && lastCursorRef.current > 0 && cursor < lastCursorRef.current) {
+      setCounts({ mdrad_warning: 0, mdrad_critical: 0 });
+    }
+    
+    // 같은 cursor를 중복 처리하지 않음
+    if (cursor <= lastCursorRef.current) return;
+    lastCursorRef.current = cursor;
+
+    const mdrLevel = levelOf(realtimeData.scores.mdrad, THRESH.warning, THRESH.critical);
+
+    setCounts((prev) => ({
+      mdrad_warning: prev.mdrad_warning + (mdrLevel === 'warning' ? 1 : 0),
+      mdrad_critical: prev.mdrad_critical + (mdrLevel === 'critical' ? 1 : 0),
+    }));
+  }, [realtimeData, isRunning]);
 
   return (
     <WidgetCard title="Detected Anomalies" icon={<AlertTriangle size={20} />} className="h-full min-h-[190px]">

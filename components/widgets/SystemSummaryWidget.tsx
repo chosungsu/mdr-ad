@@ -3,6 +3,7 @@ import { CheckCircle2, AlertOctagon, XCircle, Server } from 'lucide-react';
 import WidgetCard from '../WidgetCard';
 import { SystemStatus } from '../../types';
 import { backendApi } from '../../utils/api';
+import { useRealtimeScores } from '../../utils/useRealtimeScores';
 
 interface SystemSummaryWidgetProps {
   isRunning: boolean;
@@ -15,6 +16,7 @@ const SystemSummaryWidget: React.FC<SystemSummaryWidgetProps> = ({ isRunning }) 
   const [modelLoaded, setModelLoaded] = useState<boolean>(false);
   const [latestScore, setLatestScore] = useState<number | null>(null);
   const [latestLevel, setLatestLevel] = useState<SystemStatus>('normal');
+  const realtimeData = useRealtimeScores(isRunning);
 
   useEffect(() => {
     if (!isRunning) {
@@ -70,40 +72,31 @@ const SystemSummaryWidget: React.FC<SystemSummaryWidgetProps> = ({ isRunning }) 
     return () => clearInterval(interval);
   }, [isRunning]);
 
+  // MDRAD의 warning/critical 기준(기본값): 75% / 95% 분위수 기준
+  const THRESH = { warning: 0.1915, critical: 0.8151 } as const;
+
+  const levelOf = (score: number | null, warning: number, critical: number): SystemStatus => {
+    if (score === null || Number.isNaN(score)) return 'normal';
+    if (score >= critical) return 'critical';
+    if (score >= warning) return 'warning';
+    return 'normal';
+  };
+
+  // Update status when new realtime data arrives
   useEffect(() => {
-    if (!isRunning) return;
+    if (!isRunning || !realtimeData) return;
 
-    // MDRAD의 warning/critical 기준(기본값): 75% / 95% 분위수 기준
-    // (필요시 백엔드에서 기준을 내려주거나, 환경변수로 조정 가능)
-    const THRESH = { warning: 0.1915, critical: 0.8151 } as const;
+    if (realtimeData.status !== 'success') {
+      setStatus('warning');
+      return;
+    }
 
-    const levelOf = (score: number | null, warning: number, critical: number): SystemStatus => {
-      if (score === null || Number.isNaN(score)) return 'normal';
-      if (score >= critical) return 'critical';
-      if (score >= warning) return 'warning';
-      return 'normal';
-    };
-
-    const interval = setInterval(async () => {
-      try {
-        const r = await backendApi.getRealtimeScores();
-        if (r.status !== 'success') {
-          setStatus('warning');
-          return;
-        }
-
-        const score = r.scores?.mdrad ?? null;
-        const level = levelOf(score, THRESH.warning, THRESH.critical);
-        setLatestScore(score);
-        setLatestLevel(level);
-        setStatus(level);
-      } catch {
-        // ignore
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning]);
+    const score = realtimeData.scores?.mdrad ?? null;
+    const level = levelOf(score, THRESH.warning, THRESH.critical);
+    setLatestScore(score);
+    setLatestLevel(level);
+    setStatus(level);
+  }, [realtimeData, isRunning]);
 
   const getStatusConfig = (s: SystemStatus) => {
     switch (s) {
