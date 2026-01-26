@@ -12,10 +12,6 @@ This project was conducted from June 2022 to March 2023 on the development of an
 - **프로젝트 목표**: 제조 공정 설비에서 실시간으로 수집되는 시계열 데이터를 기반으로 이상징후(Anomaly) 탐지 및 예측을 수행하고, 대시보드로 시각화/모니터링합니다.
 - **핵심 구성**: 프론트엔드 대시보드(React/Vite), 백엔드 API(FastAPI), 모델링 코드(TCAD/MSCVAE/통합 모델) 및 시각화 스크립트.
 
-#### Demo
-
-- **Demo site**: `https://ai.studio/apps/drive/1QIWmsE6sn0cEUbPLvf6WN-OY4X8plDAa`
-
 #### Repository Structure
 
 아래는 주요 폴더/파일을 중심으로 한 구조 요약입니다.
@@ -113,7 +109,7 @@ This will:
 - **핵심 아이디어**
   - Transformer 기반 **전역(Global) 컨텍스트 인코더**
   - ResNet(1D Conv) 기반 **지역(Local) 패턴 인코더**
-  - \(z_1\)과 \(z_2\)의 표현 불일치(discrepancy) + 재구성 오차를 통해 이상 점수를 산출
+  - ($z_1$)과 ($z_2$)의 표현 불일치(discrepancy) + 재구성 오차를 통해 이상 점수를 산출
 - **주요 파일**
   - `modeling/tcad/model.py`: TCAD 아키텍처
   - `modeling/tcad/train.py`, `eval.py`, `visualize.py`
